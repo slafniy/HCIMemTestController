@@ -9,4 +9,6 @@ Then look on methods `StartMemtests`,  `GetCoverages` and `CloseMemtests`
 ## Example
 See `MemtestControllerExample\HCIMemtestRunner.cs`
 
-You need to place freeware version of HCI6.exe to working directory.
+You need to place freeware version of HCI memtest (memtest.exe) to working directory.
+Download link: https://hcidesign.com/memtest/MemTest.zip
+

@@ -26,7 +26,7 @@ namespace HCIMemTestController
 
    public class Controller
    {
-      private const string MEMTEST_EXE = "HCI6.exe";
+      private const string MEMTEST_EXE = "memtest.exe";
       private const int MEMTEST_MAX_RAM = 2048;
       private DateTime _startTime;
 
