@@ -1,0 +1,10 @@
+.idea/
+.vs/
+HCIMemTestController/obj/
+HCIMemTestController/bin/
+MemtestControllerExample/bin/
+MemtestControllerExample/obj/
+
+*.dll
+*.pdb
+*.exe
