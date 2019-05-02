@@ -1,6 +1,8 @@
 # MemTestController
 C# helper to automate freeware version of HCI MemTest
 
+Inspired and initially based on https://github.com/integralfx/MemTestHelper
+
 ## Usage
 Pretty simple.
 You need to create an instance of `Controller`.
