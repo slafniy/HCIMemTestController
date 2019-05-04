@@ -9,12 +9,6 @@ using System.Threading;
 
 namespace HCIMemTestController
 {
-   public struct Window
-   {
-      public IntPtr Handle;
-      public string Title;
-   }
-
    public class MemTestProcessWrapper
    {
       private const string MEMTEST_EDT_RAM = "Edit1";
@@ -22,8 +16,7 @@ namespace HCIMemTestController
       private const string MEMTEST_STATIC_COVERAGE = "Static1";
       private const int BM_CLICK = 0xF5;
       private const int WM_SETTEXT = 0xC;
-      private const int SW_MINIMIZE = 6;
-      private const int WM_CLOSE = 0x0010; // Message to close window by handle
+
 
       private readonly string _pathToMemTestExe;
       private readonly double _ramSizeMb;
@@ -41,7 +34,7 @@ namespace HCIMemTestController
 
       public int PID => _process.Id;
 
-      public void Start()
+      public void InitialStart()
       {
          var startInfo = new ProcessStartInfo
          {
@@ -53,14 +46,19 @@ namespace HCIMemTestController
          _process = new Process { StartInfo = startInfo };
          _process.Start();
 
-         CloseAnnoyingWindows("Welcome, New MemTest User"); // in freeware version
-         WaitMainWindowHandle();
+//         CloseAnnoyingWindows("Welcome, New MemTest User"); // in freeware version
+
+//         CloseAnnoyingWindows("Message for first-time users");
+      }
+
+      public void MemtestPrepareAndStart()
+      {
+         WaitMainWindowHandle();  // Someone should close startup dialog! Waiting for it
          User32Helper.ShowWindow(_process.MainWindowHandle, User32Helper.SW_HIDE);
          ControlSetText(_process.MainWindowHandle, MEMTEST_EDT_RAM, $"{_ramSizeMb:f2}");
          ControlClick(_process.MainWindowHandle, MEMTEST_BTN_START);
-         CloseAnnoyingWindows("Message for first-time users");
       }
-
+      
       private static void ControlClick(IntPtr hwndParent, string className)
       {
          IntPtr hwnd = FindUIElementByName(hwndParent, className);
@@ -158,49 +156,7 @@ namespace HCIMemTestController
 
          return hwnd;
       }
-
-      private void CloseAnnoyingWindows(string title, uint timeToCloseMs = 5000, IntPtr parent=default(IntPtr))
-      {
-         DateTime end = DateTime.UtcNow + TimeSpan.FromMilliseconds(timeToCloseMs);
-         while (DateTime.UtcNow < end)
-         {
-            IEnumerable<Window> windows = GetWindowsTitles(parent);
-            foreach (var w in windows)
-            {
-               if (w.Title == title)
-               {
-                  User32Helper.ShowWindow(w.Handle, User32Helper.SW_HIDE);
-                  Console.WriteLine($"Found annoying window {w.Title}, sending close");
-                  User32Helper.SendMessage(w.Handle, WM_CLOSE, IntPtr.Zero, IntPtr.Zero);
-                  return;
-               }
-
-               Thread.Sleep(5);
-            }
-         }
-      }
-
-      private IEnumerable<Window> GetWindowsTitles(IntPtr parent=default(IntPtr))
-      {
-         var memTestWindowTitles = new List<Window>();
-
-         IEnumerable<IntPtr> allWindows = User32Helper.GetChildWindows(parent);
-         foreach (IntPtr handle in allWindows)
-         {
-            User32Helper.GetWindowThreadProcessId(handle, out uint pid);
-            if (pid != _process.Id)
-            {
-               continue;
-            }
-            int textLength = User32Helper.GetWindowTextLength(handle);
-            var title = new StringBuilder(textLength + 1);
-            User32Helper.GetWindowText(handle, title, title.Capacity);
-            memTestWindowTitles.Add(new Window { Handle = handle, Title = title.ToString() });
-         }
-
-         return memTestWindowTitles;
-      }
-
+      
       private static string ControlGetText(IntPtr hwnd, string className)
       {
          IntPtr hwndControl = FindUIElementByName(hwnd, className);

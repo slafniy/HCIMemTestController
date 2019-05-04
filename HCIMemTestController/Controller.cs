@@ -5,11 +5,18 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace HCIMemTestController
 {
+   public struct Window
+   {
+      public IntPtr Handle;
+      public string Title;
+   }
+   
    public class Coverage
    {
       public int ErrorCount;
@@ -26,6 +33,7 @@ namespace HCIMemTestController
 
    public class Controller
    {
+      private const int WM_CLOSE = 0x0010; // Message to close window by handle
       private const string MEMTEST_EXE = "memtest.exe";
       private const int MEMTEST_MAX_RAM = 2048;
       private DateTime _startTime;
@@ -73,14 +81,15 @@ namespace HCIMemTestController
                                 $"which gives {ram} per process, that exceeds freeware HCI " +
                                 $"memtest limit - {MEMTEST_MAX_RAM}");
          }
-
+         
+         // Just run memtest processes
          Parallel.For(0, threadCount, i =>
          {
             try
             {
                var memtestProcess = new MemTestProcessWrapper(MEMTEST_EXE, ram);
                _memtestProcessWrappers.Add(memtestProcess);
-               memtestProcess.Start();
+               memtestProcess.InitialStart();
             }
             catch (Exception)
             {
@@ -89,12 +98,56 @@ namespace HCIMemTestController
                   throw;
             }
          });
+         
+         CloseAnnoyingWindows("Welcome, New MemTest User"); // in freeware version
+         
+         // Set RAM and start
+         Parallel.ForEach(_memtestProcessWrappers, memtestProcess =>
+         {
+            memtestProcess.MemtestPrepareAndStart();
+         });
+
          _startTime = DateTime.UtcNow;
+         CloseAnnoyingWindows("Message for first-time users");
       }
 
+      private static void CloseAnnoyingWindows(string title, uint timeToCloseMs = 5000, IntPtr parent=default(IntPtr))
+      {
+         DateTime end = DateTime.UtcNow + TimeSpan.FromMilliseconds(timeToCloseMs);
+         while (DateTime.UtcNow < end)
+         {
+            IEnumerable<Window> windows = GetWindowsTitles(parent);
+            foreach (Window w in windows)
+            {
+               if (w.Title != title)
+               {
+                  continue;
+               }
+               User32Helper.ShowWindow(w.Handle, User32Helper.SW_HIDE);
+               Console.WriteLine($"Found annoying window {w.Title}, sending close");
+               User32Helper.SendMessage(w.Handle, WM_CLOSE, IntPtr.Zero, IntPtr.Zero);
+            }
+         }
+      }
+      
+      private static IEnumerable<Window> GetWindowsTitles(IntPtr parent=default(IntPtr))
+      {
+         var memTestWindowTitles = new List<Window>();
+
+         IEnumerable<IntPtr> allWindows = User32Helper.GetChildWindows(parent);
+         foreach (IntPtr handle in allWindows)
+         {
+            int textLength = User32Helper.GetWindowTextLength(handle);
+            var title = new StringBuilder(textLength + 1);
+            User32Helper.GetWindowText(handle, title, title.Capacity);
+            memTestWindowTitles.Add(new Window { Handle = handle, Title = title.ToString() });
+         }
+         return memTestWindowTitles;
+      }
+      
       public bool AreAllMemtestsAlive()
       {
-         foreach (var w in _memtestProcessWrappers)
+         foreach (MemTestProcessWrapper w in _memtestProcessWrappers)
          {
             if (!w.IsAlive())
             {
