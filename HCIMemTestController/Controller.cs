@@ -52,26 +52,13 @@ namespace HCIMemTestController
          var result = new ConcurrentBag<Coverage>();
          Parallel.ForEach(_memtestProcessWrappers, memtestProcess =>
          {
-            Tuple<double, int> cov = null;
-            uint triesLeft = 100;
-            while (cov == null && triesLeft > 0)  // TODO: use timeout?
-            {
-               cov = memtestProcess.GetCoverageInfo();
-               triesLeft--;
-               Thread.Sleep(100);  // wait sleep * tries Ms for coverage
-            }
-
-            if (cov == null)
-            {
-               throw new Exception($"Cannot get coverage from memtest process with ID {memtestProcess.PID}");
-            }
-            
+            Tuple<double, int> cov = memtestProcess.GetCoverageInfo() ?? new Tuple<double, int>(0, 0);
             result.Add(new Coverage(cov.Item2, cov.Item1, memtestProcess.PID));
          });
 
          List<Coverage> listResult = result.ToList();
          listResult.Sort((item, other) => item.ProcessID.CompareTo(other.ProcessID));
-         return new Tuple<List<Coverage>, TimeSpan>(listResult.ToList(), DateTime.UtcNow - _startTime);
+         return new Tuple<List<Coverage>, TimeSpan>(listResult, DateTime.UtcNow - _startTime);
       }
 
       public void StartMemtests(int threadCount, double ramCount)

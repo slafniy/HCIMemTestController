@@ -220,8 +220,11 @@ namespace HCIMemTestController
 
          // Test over. 47.3% Coverage, 0 Errors
          //            ^^^^^^^^^^^^^^^^^^^^^^^^
-         int start = str.IndexOfAny("0123456789".ToCharArray());
-         if (start == -1) return null;
+         int start = str.IndexOfAny("0123456789".ToCharArray());  // TODO: this looks NOT GOOD
+         if (start == -1)
+         {
+            return null;
+         }
          str = str.Substring(start);
 
          // 47.3% Coverage, 0 Errors
