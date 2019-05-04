@@ -47,7 +47,8 @@ namespace HCIMemTestController
          {
             FileName = _pathToMemTestExe,
             WindowStyle = ProcessWindowStyle.Hidden,
-            CreateNoWindow = true
+            CreateNoWindow = true,
+            UseShellExecute = false
          };
          _process = new Process { StartInfo = startInfo };
          _process.Start();
@@ -81,7 +82,7 @@ namespace HCIMemTestController
          return !_process.HasExited;
       }
 
-      private void WaitMainWindowHandle(uint timeoutMs = 10000)
+      private void WaitMainWindowHandle(uint timeoutMs = 100000)
       {
          DateTime end = DateTime.UtcNow + TimeSpan.FromMilliseconds(timeoutMs);
          while (DateTime.UtcNow < end)

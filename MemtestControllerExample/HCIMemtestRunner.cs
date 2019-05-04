@@ -13,14 +13,14 @@ namespace RunHCIOfficialCLI
             
             Console.WriteLine($"Available RAM: {Controller.GetFreeRam()}");
             
-            controller.StartMemtests(4, 128);
+            controller.StartMemtests(40, 3000);
 
             ReportProgress();
 
             controller.CloseAllMemtests();
 
 
-            void ReportProgress(double stopOnCoverage = 15, uint intervalMs = 1000)
+            void ReportProgress(double stopOnCoverage = 0, uint intervalMs = 1000)
             {
                 while (true)
                 {
@@ -28,10 +28,6 @@ namespace RunHCIOfficialCLI
                     Console.WriteLine($"======= Elapsed time, sec: {coveragesAndTime.Item2.TotalSeconds:f1}  =======");
                     foreach (Coverage cov in coveragesAndTime.Item1)
                     {
-                        if (cov == null)
-                        {
-                            continue;
-                        }
                         Console.WriteLine($"Coverage: {cov.CoveragePercent}, errors: {cov.ErrorCount}");
                         if (cov.CoveragePercent >= stopOnCoverage)
                         {
