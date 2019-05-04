@@ -71,7 +71,7 @@ namespace HCIMemTestController
 
          List<Coverage> listResult = result.ToList();
          listResult.Sort((item, other) => item.ProcessID.CompareTo(other.ProcessID));
-         return new Tuple<List<Coverage>, TimeSpan>(result.ToList(), DateTime.UtcNow - _startTime);
+         return new Tuple<List<Coverage>, TimeSpan>(listResult.ToList(), DateTime.UtcNow - _startTime);
       }
 
       public void StartMemtests(int threadCount, double ramCount)
